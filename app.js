@@ -1,73 +1,63 @@
+const dns = require("dns");
+dns.setServers(["8.8.8.8"]);
+
 const express = require("express");
-const students = require("./students.json");
+const connectDB = require("./config/db");
+const Student = require("./models/Student");
 
 const app = express();
 const PORT = 3000;
 
-app.set("view engine", "ejs");
-
-app.use((req, res, next) => {
-    const time = new Date().toLocaleTimeString();
-    console.log(`${req.method} ${req.url} ${time}`);
-    next();
-});
+connectDB();
 
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send(`
-    <h1>Student API in Express</h1>
-    <p>Welcome to the Student API.</p>
-    <h3>Available Routes:</h3>
+    <h1>Database-backed Student API</h1>
+    <p>This API uses MongoDB instead of students.json.</p>
     <ul>
       <li>GET /api/students</li>
-      <li>GET /api/students/1</li>
-      <li>GET /api/students?major=IT</li>
+      <li>POST /api/students</li>
+      <li>GET /api/students/:id</li>
     </ul>
   `);
 });
 
-app.get("/api/students", (req, res) => {
-  const major = req.query.major;
-
-  if (major) {
-    const filteredStudents = students.filter((s) => s.major === major);
-    return res.json(filteredStudents);
+app.get("/api/students", async (req, res) => {
+  try {
+    const students = await Student.find();
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
   }
-
-  res.json(students);
 });
 
-app.get("/api/students/:id", (req, res) => {
-  const id = req.params.id;
-  const student = students.find((s) => s.id === Number(id));
-
-  if (!student) {
-    return res.status(404).json({
-      error: "Student not found"
-    });
+app.post("/api/students", async (req, res) => {
+  try {
+    const created = await Student.create(req.body);
+    res.status(201).json(created);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
-
-  res.json(student);
 });
 
-app.post("/api/students", (req, res) => {
-  const newStudent = req.body;
-  students.push(newStudent);
-  res.status(201).json(newStudent);
-});
+app.get("/api/students/:id", async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
 
-app.get("/students", (req, res) => {
-  res.render("students", {
-    title: "All Students",
-    students: students
-  });
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    res.json(student);
+  } catch (error) {
+    res.status(404).json({ error: "Invalid student ID" });
+  }
 });
 
 app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found"
-  });
+  res.status(404).json({ error: "Route not found" });
 });
 
 app.listen(PORT, () => {

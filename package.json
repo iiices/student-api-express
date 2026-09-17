@@ -1,5 +1,5 @@
 {
-  "name": "student-api-express",
+  "name": "database-backed-student-api",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,8 +12,9 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "ejs": "^6.0.1",
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.10.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
